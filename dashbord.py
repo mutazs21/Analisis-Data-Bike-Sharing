@@ -12,7 +12,7 @@ day_data["dteday"] = pd.to_datetime(day_data["dteday"])
 hour_data["dteday"] = pd.to_datetime(hour_data["dteday"])
 
 # Judul Dashboard
-st.title("Analisis Data Bike Sharing")
+st.title("Analisis Data Bike Sharing 📊")
 
 # Sidebar untuk memilih visualisasi
 st.sidebar.header("Pilih Analisis")
@@ -21,12 +21,24 @@ option = st.sidebar.selectbox(
     ["Tren Penyewaan Mingguan", "Tren Penyewaan Bulanan", "Distribusi Penyewaan Berdasarkan Musim", "Waktu Paling Sibuk",]
 )
 
+# Fitur Filter Tanggal
+st.sidebar.subheader("Filter Data Berdasarkan Tanggal")
+start_date = st.sidebar.date_input("Mulai dari:", day_data["dteday"].min())
+end_date = st.sidebar.date_input("Sampai:", day_data["dteday"].max())
+
+# rentang tanggal
+if start_date > end_date:
+    st.sidebar.error("Tanggal awal tidak boleh lebih besar dari tanggal akhir!")
+
+# Filter data berdasarkan tanggal yang dipilih
+filtered_day_data = day_data[(day_data["dteday"] >= pd.to_datetime(start_date)) & (day_data["dteday"] <= pd.to_datetime(end_date))]
+
 # Analisis Tren Penyewaan Mingguan
 if option == "Tren Penyewaan Mingguan":
     st.subheader("📅 Tren Penyewaan Sepeda per Hari dalam Seminggu")
-    
+
     # Agregasi rata-rata jumlah penyewaan per hari dalam seminggu
-    weekly_trend = day_data.groupby(day_data["dteday"].dt.day_name())["cnt"].mean().reset_index()
+    weekly_trend = filtered_day_data.groupby(filtered_day_data["dteday"].dt.day_name())["cnt"].mean().reset_index()
     order = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
     weekly_trend["dteday"] = pd.Categorical(weekly_trend["dteday"], categories=order, ordered=True)
     weekly_trend = weekly_trend.sort_values("dteday")
@@ -39,20 +51,13 @@ if option == "Tren Penyewaan Mingguan":
     ax.set_ylabel("Rata-rata Penyewaan")
     plt.xticks(rotation=45)
     st.pyplot(fig)
-    
-    # Insight
-    st.markdown("""
-    ### Insight:
-    - Jumlah penyewaan sepeda lebih tinggi pada Sabtu dan Minggu, menunjukkan bahwa sepeda lebih banyak digunakan untuk aktivitas rekreasi.
-    - Rata-rata penyewaan sepeda paling rendah terjadi pada hari Senin, kemungkinan karena orang masih beradaptasi setelah akhir pekan.
-    """)
-    
+
 # Tren Penyewaan Sepeda Bulanan
 elif option == "Tren Penyewaan Bulanan":
     st.subheader("📆 Tren Penyewaan Sepeda Bulanan")
 
     # Agregasi jumlah penyewaan per bulan
-    monthly_trend = day_data.groupby("mnth")["cnt"].sum().reset_index()
+    monthly_trend = filtered_day_data.groupby("mnth")["cnt"].sum().reset_index()
 
     # Visualisasi
     fig, ax = plt.subplots(figsize=(10,5))
@@ -64,14 +69,6 @@ elif option == "Tren Penyewaan Bulanan":
     ax.set_xticklabels(["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"])
     ax.grid()
     st.pyplot(fig)
-    
-    # Insight
-    st.markdown("""
-    ### Insight:
-    - Penyewaan sepeda cenderung meningkat pada bulan-bulan musim panas (Juni Agustus).
-    - Penurunan terlihat di musim dingin (Desember - Februari).
-    """)
-
 
 # Distribusi Penyewaan Berdasarkan Musim
 elif option == "Distribusi Penyewaan Berdasarkan Musim":
@@ -79,29 +76,25 @@ elif option == "Distribusi Penyewaan Berdasarkan Musim":
 
     # Mapping nama musim
     season_labels = {1: "Spring", 2: "Summer", 3: "Fall", 4: "Winter"}
-    day_data["season"] = day_data["season"].map(season_labels)
+    filtered_day_data["season"] = filtered_day_data["season"].map(season_labels)
 
     # Visualisasi
     fig, ax = plt.subplots(figsize=(10,5))
-    sns.barplot(data=day_data, x="season", y="cnt", ax=ax, palette="viridis")
+    sns.barplot(data=filtered_day_data, x="season", y="cnt", ax=ax, palette="viridis")
     ax.set_title("Frekuensi Penyewaan Sepeda Berdasarkan Musim")
     ax.set_xlabel("Musim")
     ax.set_ylabel("Rata-rata Penyewaan")
     st.pyplot(fig)
-    
-    # Insight
-    st.markdown("""
-    ### Insight:
-    - Penyewaan paling tinggi terjadi pada musim panas, kemungkinan karena cuaca lebih nyaman untuk bersepeda.
-    - Penyewaan terendah pada musim dingin, mungkin karena kondisi cuaca yang lebih sulit.
-    """)
 
 # Waktu Paling Sibuk
 elif option == "Waktu Paling Sibuk":
     st.subheader("⏰ Waktu Paling Sibuk dalam Penyewaan Sepeda")
 
+    # Filter juga hour_data agar sesuai dengan tanggal yang dipilih
+    filtered_hour_data = hour_data[(hour_data["dteday"] >= pd.to_datetime(start_date)) & (hour_data["dteday"] <= pd.to_datetime(end_date))]
+
     # Agregasi jumlah penyewaan per jam
-    busy_hours = hour_data.groupby("hr")["cnt"].mean().reset_index()
+    busy_hours = filtered_hour_data.groupby("hr")["cnt"].mean().reset_index()
 
     # Visualisasi
     fig, ax = plt.subplots(figsize=(10,5))
@@ -111,11 +104,3 @@ elif option == "Waktu Paling Sibuk":
     ax.set_ylabel("Rata-rata Penyewaan")
     ax.set_xticks(range(0, 24))
     st.pyplot(fig)
-    
-    #Insight
-    st.markdown("""
-    ### Insight:
-    - Waktu penyewaan paling sibuk terjadi pada jam **07:00 - 09:00** dan **17:00 - 19:00** (jam berangkat & pulang kerja).
-    - Waktu paling sepi adalah setelah tengah malam hingga subuh.
-    """)
-    
