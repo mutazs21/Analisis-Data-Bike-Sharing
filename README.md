@@ -32,4 +32,4 @@ This app utilizes two datasets:
    ```
 
 ## Link
-https://qg4zvpgikxqdbh9poq2tvv.streamlit.app/
+https://app-bike-sharing.streamlit.app/
