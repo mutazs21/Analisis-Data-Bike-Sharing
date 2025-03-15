@@ -78,12 +78,15 @@ elif option == "Distribusi Penyewaan Berdasarkan Musim":
     season_labels = {1: "Spring", 2: "Summer", 3: "Fall", 4: "Winter"}
     filtered_day_data["season"] = filtered_day_data["season"].map(season_labels)
 
+    # Agregasi total penyewaan per musim
+    season_totals = filtered_day_data.groupby("season")["cnt"].sum().reset_index()
+
     # Visualisasi
     fig, ax = plt.subplots(figsize=(10,5))
-    sns.barplot(data=filtered_day_data, x="season", y="cnt", ax=ax, palette="viridis")
-    ax.set_title("Frekuensi Penyewaan Sepeda Berdasarkan Musim")
+    sns.barplot(data=season_totals, x="season", y="cnt", ax=ax, palette="viridis")
+    ax.set_title("Total Penyewaan Sepeda Berdasarkan Musim")
     ax.set_xlabel("Musim")
-    ax.set_ylabel("Rata-rata Penyewaan")
+    ax.set_ylabel("Total Penyewaan")
     st.pyplot(fig)
 
 # Waktu Paling Sibuk
@@ -94,13 +97,13 @@ elif option == "Waktu Paling Sibuk":
     filtered_hour_data = hour_data[(hour_data["dteday"] >= pd.to_datetime(start_date)) & (hour_data["dteday"] <= pd.to_datetime(end_date))]
 
     # Agregasi jumlah penyewaan per jam
-    busy_hours = filtered_hour_data.groupby("hr")["cnt"].mean().reset_index()
+    busy_hours = filtered_hour_data.groupby("hr")["cnt"].sum().reset_index()
 
     # Visualisasi
     fig, ax = plt.subplots(figsize=(10,5))
     sns.lineplot(data=busy_hours, x="hr", y="cnt", ax=ax, marker="o", color="red")
     ax.set_title("Tren Penyewaan Sepeda Berdasarkan Jam")
     ax.set_xlabel("Jam")
-    ax.set_ylabel("Rata-rata Penyewaan")
+    ax.set_ylabel("Total Jumlah Penyewaan Sepeda")
     ax.set_xticks(range(0, 24))
     st.pyplot(fig)
